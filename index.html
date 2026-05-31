@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>角色报名统计单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin: 30px 0;
+        }
+        /* 报名表单区域 */
+        .form-box {
+            width: 550px;
+            margin: 0 auto 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .item {
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 100px;
+            font-size: 16px;
+        }
+        input, select {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        #uploadBox {
+            display: none;
+            margin-left: 100px;
+            margin-top: 5px;
+        }
+        .add-btn {
+            width: 120px;
+            height: 40px;
+            margin: 20px auto 0;
+            background-color: #0066ff;
+            color: #fff;
+            border: 1px solid #0066ff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        /* 管理员区域 */
+        .admin-box {
+            width: 650px;
+            margin: 0 auto 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .admin-btn {
+            padding: 8px 15px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 搜索区域 */
+        .search-box {
+            width: 650px;
+            margin: 0 auto 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-btn {
+            padding: 8px 20px;
+            background-color: red;
+            color: #fff;
+            border: 1px solid red;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 表格样式 统一单元格尺寸 */
+        table {
+            width: 1100px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            text-align: center;
+            margin-bottom: 80px; /* 新增：表格底部空白 */
+        }
+        th, td {
+            border: 1px solid #333;
+            width: 157px;
+            height: 60px;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        /* 按钮样式 */
+        .del-btn, .edit-btn {
+            padding: 5px 10px;
+            margin: 2px;
+            background-color: red;
+            color: #fff;
+            border: 1px solid red;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        /* 表格内图片样式 */
+        .table-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+        }
+        /* 编辑弹窗 */
+        .edit-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .edit-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .edit-box input {
+            padding: 8px;
+        }
+        .edit-sure, .edit-cancel {
+            padding: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>角色报名统计单</h1>
+
+    <!-- 报名表单 -->
+    <div class="form-box">
+        <div class="item">
+            <label>账号名称：</label>
+            <input type="text" id="account" placeholder="请输入....">
+        </div>
+        <div class="item">
+            <label>角色姓名：</label>
+            <input type="text" id="name" placeholder="请输入....">
+        </div>
+        <div class="item">
+            <label>角色年龄：</label>
+            <input type="number" id="age" placeholder="请输入....">
+        </div>
+        <div class="item">
+            <label>角色性别：</label>
+            <div class="radio-group">
+                <input type="radio" name="gender" value="男"> 男
+                <input type="radio" name="gender" value="女"> 女
+            </div>
+        </div>
+        <div class="item">
+            <label>角色形象：</label>
+            <select id="imageType">
+                <option value="主播做">主播做</option>
+                <option value="自定义">自定义</option>
+            </select>
+        </div>
+        <div id="uploadBox">
+            <input type="file" id="imgFile" accept="image/*">
+        </div>
+        <button class="add-btn" id="addBtn">添加</button>
+    </div>
+
+    <!-- 管理员验证 -->
+    <div class="admin-box">
+        <input type="password" id="adminPwd" placeholder="管理员输入密码">
+        <button class="admin-btn" id="adminBtn">验证管理员</button>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索内容">
+        <button class="search-btn" id="searchBtn">查询</button>
+    </div>
+
+    <!-- 数据表格 -->
+    <table>
+        <thead>
+            <tr>
+                <th>序号</th>
+                <th>账号名称</th>
+                <th>角色姓名</th>
+                <th>角色性别</th>
+                <th>角色年龄</th>
+                <th>角色形象</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <!-- 编辑信息弹窗 -->
+    <div class="edit-mask" id="editMask">
+        <div class="edit-box">
+            <h3>修改报名信息</h3>
+            <input type="text" id="editAccount" placeholder="账号名称">
+            <input type="text" id="editName" placeholder="角色姓名">
+            <input type="number" id="editAge" placeholder="角色年龄">
+            <div style="display:flex;gap:10px;">
+                <input type="radio" name="editGender" value="男"> 男
+                <input type="radio" name="editGender" value="女"> 女
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button class="edit-sure" id="editSure">确认修改</button>
+                <button class="edit-cancel" id="editCancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局元素 & 配置
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const adminPwd = document.getElementById('adminPwd');
+        const adminBtn = document.getElementById('adminBtn');
+        const imageType = document.getElementById('imageType');
+        const uploadBox = document.getElementById('uploadBox');
+        const imgFile = document.getElementById('imgFile');
+        const addBtn = document.getElementById('addBtn');
+        const editMask = document.getElementById('editMask');
+        const editSure = document.getElementById('editSure');
+        const editCancel = document.getElementById('editCancel');
+
+        let isAdmin = false;
+        const ADMIN_PWD = "654320"; // 管理员密码
+        let allData = JSON.parse(localStorage.getItem('roleData')) || [];
+        let nowEditId = null; // 当前编辑的条目ID
+        let tempImgSrc = ""; // 临时存储上传图片地址
+
+        // 切换形象：显示/隐藏上传框
+        imageType.addEventListener('change', function () {
+            uploadBox.style.display = this.value === '自定义' ? 'block' : 'none';
+        });
+
+        // 读取上传图片
+        imgFile.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                tempImgSrc = ev.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // 渲染表格
+        function renderData(list) {
+            tableBody.innerHTML = '';
+            if (list.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7">暂无报名数据</td></tr>';
+                return;
+            }
+            list.forEach(item => {
+                // 角色形象展示：主播做=未知，自定义=图片
+                let imgHtml = item.imgType === "自定义" 
+                    ? `<img src="${item.imgSrc}" class="table-img">` 
+                    : "未知";
+                // 权限控制：管理员显示编辑+删除，普通用户无操作按钮
+                let opHtml = isAdmin 
+                    ? `<button class="edit-btn" data-id="${item.id}">编辑</button>
+                       <button class="del-btn" data-id="${item.id}">删除</button>`
+                    : "无权限";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.account}</td>
+                    <td>${item.name}</td>
+                    <td>${item.gender}</td>
+                    <td>${item.age}</td>
+                    <td>${imgHtml}</td>
+                    <td>${opHtml}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // 初始渲染
+        renderData(allData);
+
+        // 添加报名信息
+        addBtn.addEventListener('click', function () {
+            const account = document.getElementById('account').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const age = document.getElementById('age').value.trim();
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
+            const imgType = imageType.value;
+
+            // 表单校验
+            if (!account || !name || !age) {
+                alert('请填写完整账号、姓名、年龄！');
+                return;
+            }
+            if (!gender) {
+                alert('请选择角色性别！');
+                return;
+            }
+
+            // 组装数据
+            const newItem = {
+                id: allData.length + 1,
+                account,
+                name,
+                gender,
+                age,
+                imgType,
+                imgSrc: imgType === "自定义" ? tempImgSrc : ""
+            };
+            allData.push(newItem);
+            localStorage.setItem('roleData', JSON.stringify(allData));
+            renderData(allData);
+
+            // 清空表单
+            document.getElementById('account').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('age').value = '';
+            document.querySelectorAll('input[name="gender"]').forEach(el => el.checked = false);
+            imageType.value = '主播';
+            uploadBox.style.display = 'none';
+            tempImgSrc = "";
+            imgFile.value = "";
+        });
+
+        // 管理员验证
+        adminBtn.addEventListener('click', () => {
+            if (adminPwd.value.trim() === ADMIN_PWD) {
+                isAdmin = true;
+                alert('管理员验证成功，已开启编辑/删除权限！');
+                renderData(allData);
+            } else {
+                alert('密码错误，仅可查看和报名');
+            }
+        });
+
+        // 模糊查询：序号、账号、角色姓名
+        searchBtn.addEventListener('click', () => {
+            const key = searchInput.value.trim();
+            if (!key) {
+                renderData(allData);
+                return;
+            }
+            const filterList = allData.filter(item => {
+                return item.id.toString().includes(key)
+                    || item.account.includes(key)
+                    || item.name.includes(key);
+            });
+            renderData(filterList);
+        });
+
+        // 表格点击：编辑 / 删除
+        tableBody.addEventListener('click', (e) => {
+            if (!isAdmin) return;
+            const id = Number(e.target.dataset.id);
+
+            // 删除操作
+            if (e.target.classList.contains('del-btn')) {
+                allData = allData.filter(item => item.id !== id)
+                    .map((item, idx) => ({ ...item, id: idx + 1 }));
+                localStorage.setItem('roleData', JSON.stringify(allData));
+                renderData(allData);
+            }
+
+            // 编辑操作：弹出弹窗
+            if (e.target.classList.contains('edit-btn')) {
+                nowEditId = id;
+                const editItem = allData.find(item => item.id === id);
+                document.getElementById('editAccount').value = editItem.account;
+                document.getElementById('editName').value = editItem.name;
+                document.getElementById('editAge').value = editItem.age;
+                document.querySelector(`input[name="editGender"][value="${editItem.gender}"]`).checked = true;
+                editMask.style.display = 'flex';
+            }
+        });
+
+        // 取消编辑
+        editCancel.addEventListener('click', () => {
+            editMask.style.display = 'none';
+            nowEditId = null;
+        });
+
+        // 确认修改信息
+        editSure.addEventListener('click', () => {
+            const newAccount = document.getElementById('editAccount').value.trim();
+            const newName = document.getElementById('editName').value.trim();
+            const newAge = document.getElementById('editAge').value.trim();
+            const newGender = document.querySelector('input[name="editGender"]:checked')?.value;
+
+            if (!newAccount || !newName || !newAge || !newGender) {
+                alert('信息不能为空！');
+                return;
+            }
+
+            // 更新数据
+            allData = allData.map(item => {
+                if (item.id === nowEditId) {
+                    return {
+                        ...item,
+                        account: newAccount,
+                        name: newName,
+                        age: newAge,
+                        gender: newGender
+                    };
+                }
+                return item;
+            });
+
+            localStorage.setItem('roleData', JSON.stringify(allData));
+            renderData(allData);
+            editMask.style.display = 'none';
+            nowEditId = null;
+            alert('修改成功！');
+        });
+    </script>
+</body>
+</html>
